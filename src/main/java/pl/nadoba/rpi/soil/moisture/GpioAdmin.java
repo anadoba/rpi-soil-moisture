@@ -4,6 +4,7 @@ import com.pi4j.gpio.extension.mcp.MCP3008GpioProvider;
 import com.pi4j.gpio.extension.mcp.MCP3008Pin;
 import com.pi4j.io.gpio.*;
 import com.pi4j.io.spi.SpiChannel;
+import com.pi4j.wiringpi.Shift;
 
 import java.io.IOException;
 
@@ -21,7 +22,9 @@ public class GpioAdmin {
     private final GpioPinDigitalOutput shiftDataInput = gpio.provisionDigitalOutputPin(RaspiPin.GPIO_24, "SHIFT DATA INPUT", PinState.LOW);
     private final GpioPinDigitalOutput shiftToggle = gpio.provisionDigitalOutputPin(RaspiPin.GPIO_28, "SHIFT TOGGLE", PinState.LOW);
 
-    private MCP3008GpioProvider mcp3008 = null;
+    private final ShiftClient shiftClient = new ShiftClient(shiftDataInput, shiftToggle);
+
+    private MCP3008GpioProvider mcp3008;
 
     public GpioAdmin() {
         try {
