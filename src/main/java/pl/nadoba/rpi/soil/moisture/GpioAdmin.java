@@ -14,10 +14,10 @@ public class GpioAdmin {
 
     private final GpioController gpio = GpioFactory.getInstance();
 
-    private final GpioPinDigitalOutput digit1 = gpio.provisionDigitalOutputPin(RaspiPin.GPIO_03, "DIGIT 1", PinState.LOW);
-    private final GpioPinDigitalOutput digit2 = gpio.provisionDigitalOutputPin(RaspiPin.GPIO_02, "DIGIT 2", PinState.LOW);
-    private final GpioPinDigitalOutput digit3 = gpio.provisionDigitalOutputPin(RaspiPin.GPIO_04, "DIGIT 3", PinState.LOW);
-    private final GpioPinDigitalOutput digit4 = gpio.provisionDigitalOutputPin(RaspiPin.GPIO_00, "DIGIT 4", PinState.LOW);
+    private final GpioPinDigitalOutput digit1 = gpio.provisionDigitalOutputPin(RaspiPin.GPIO_03, "DIGIT 1", PinState.HIGH);
+    private final GpioPinDigitalOutput digit2 = gpio.provisionDigitalOutputPin(RaspiPin.GPIO_02, "DIGIT 2", PinState.HIGH);
+    private final GpioPinDigitalOutput digit3 = gpio.provisionDigitalOutputPin(RaspiPin.GPIO_04, "DIGIT 3", PinState.HIGH);
+    private final GpioPinDigitalOutput digit4 = gpio.provisionDigitalOutputPin(RaspiPin.GPIO_00, "DIGIT 4", PinState.HIGH);
 
     private final GpioPinDigitalOutput shiftDataInput = gpio.provisionDigitalOutputPin(RaspiPin.GPIO_24, "SHIFT DATA INPUT", PinState.LOW);
     private final GpioPinDigitalOutput shiftToggle = gpio.provisionDigitalOutputPin(RaspiPin.GPIO_28, "SHIFT TOGGLE", PinState.LOW);
@@ -25,6 +25,8 @@ public class GpioAdmin {
     private final ShiftClient shiftClient = new ShiftClient(shiftDataInput, shiftToggle);
 
     private MCP3008GpioProvider mcp3008;
+
+    private int counter = 0;
 
     public GpioAdmin() {
         try {
@@ -41,8 +43,11 @@ public class GpioAdmin {
     public void loop() throws InterruptedException {
         for (; ; ) {
             System.out.println("MCP3008 CH0: " + getPinValuePercentage(MCP3008Pin.CH0) + "%");
-
+            System.out.println("DISPLAYING DIGIT: " + counter);
+            shiftClient.process((char) counter);
             Thread.sleep(CHECK_DURATION);
+            counter++;
+            if (counter == 10) counter = 0;
         }
     }
 
