@@ -68,7 +68,7 @@ public class ShiftClient {
         List<Boolean> states = digitToCommands(digit);
 
         for (Boolean state : states) {
-            dataInput.setState(state);
+            dataInput.setState(!state);
             next();
         }
     }

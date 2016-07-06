@@ -10,6 +10,7 @@ import java.io.IOException;
 
 public class GpioAdmin {
 
+    private final int RADIX = 10;
     private final static int CHECK_DURATION = 2500;
 
     private final GpioController gpio = GpioFactory.getInstance();
@@ -43,8 +44,8 @@ public class GpioAdmin {
     public void loop() throws InterruptedException {
         for (; ; ) {
             System.out.println("MCP3008 CH0: " + getPinValuePercentage(MCP3008Pin.CH0) + "%");
-            System.out.println("DISPLAYING DIGIT: " + counter);
-            shiftClient.process((char) counter);
+            System.out.println("DISPLAYING DIGIT: " + Character.forDigit(counter, RADIX));
+            shiftClient.process(Character.forDigit(counter, RADIX));
             Thread.sleep(CHECK_DURATION);
             counter++;
             if (counter == 10) counter = 0;
