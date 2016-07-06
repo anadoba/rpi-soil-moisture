@@ -3,7 +3,9 @@ package pl.nadoba.rpi.soil.moisture;
 import com.pi4j.io.gpio.GpioPinDigitalOutput;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.ArrayList;
 
 public class ShiftClient {
 
@@ -61,11 +63,13 @@ public class ShiftClient {
         if (states.size() != 8)
             throw new RuntimeException("Fix your code, man!");
 
-        return states;
+        return new ArrayList<Boolean>(states);
     }
 
     public void process(char digit) {
         List<Boolean> states = digitToCommands(digit);
+        Collections.reverse(states);
+        states.add(true); // we want to add 'false' in the end
 
         for (Boolean state : states) {
             dataInput.setState(!state);
