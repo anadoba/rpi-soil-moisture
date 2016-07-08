@@ -4,21 +4,22 @@ import com.pi4j.gpio.extension.mcp.MCP3008GpioProvider;
 import com.pi4j.gpio.extension.mcp.MCP3008Pin;
 import com.pi4j.io.gpio.*;
 import com.pi4j.io.spi.SpiChannel;
-import com.pi4j.wiringpi.Shift;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class GpioAdmin {
 
-    private final int RADIX = 10;
     private final static int CHECK_DURATION = 2500;
 
     private final GpioController gpio = GpioFactory.getInstance();
 
-    private final GpioPinDigitalOutput digit1 = gpio.provisionDigitalOutputPin(RaspiPin.GPIO_03, "DIGIT 1", PinState.HIGH);
-    private final GpioPinDigitalOutput digit2 = gpio.provisionDigitalOutputPin(RaspiPin.GPIO_02, "DIGIT 2", PinState.HIGH);
-    private final GpioPinDigitalOutput digit3 = gpio.provisionDigitalOutputPin(RaspiPin.GPIO_04, "DIGIT 3", PinState.HIGH);
-    private final GpioPinDigitalOutput digit4 = gpio.provisionDigitalOutputPin(RaspiPin.GPIO_00, "DIGIT 4", PinState.HIGH);
+    private final GpioPinDigitalOutput digit1 = gpio.provisionDigitalOutputPin(RaspiPin.GPIO_03, "DIGIT 1", PinState.LOW);
+    private final GpioPinDigitalOutput digit2 = gpio.provisionDigitalOutputPin(RaspiPin.GPIO_02, "DIGIT 2", PinState.LOW);
+    private final GpioPinDigitalOutput digit3 = gpio.provisionDigitalOutputPin(RaspiPin.GPIO_04, "DIGIT 3", PinState.LOW);
+    private final GpioPinDigitalOutput digit4 = gpio.provisionDigitalOutputPin(RaspiPin.GPIO_00, "DIGIT 4", PinState.LOW);
 
     private final GpioPinDigitalOutput shiftDataInput = gpio.provisionDigitalOutputPin(RaspiPin.GPIO_24, "SHIFT DATA INPUT", PinState.LOW);
     private final GpioPinDigitalOutput shiftToggle = gpio.provisionDigitalOutputPin(RaspiPin.GPIO_28, "SHIFT TOGGLE", PinState.LOW);
@@ -27,7 +28,7 @@ public class GpioAdmin {
 
     private MCP3008GpioProvider mcp3008;
 
-    private int counter = 0;
+    private String percentage = "   0";
 
     public GpioAdmin() {
         try {
@@ -42,13 +43,35 @@ public class GpioAdmin {
     }
 
     public void loop() throws InterruptedException {
+        displayLoop();
+
         for (; ; ) {
-            System.out.println("MCP3008 CH0: " + getPinValuePercentage(MCP3008Pin.CH0) + "%");
-            System.out.println("DISPLAYING DIGIT: " + Character.forDigit(counter, RADIX));
-            shiftClient.process(Character.forDigit(counter, RADIX));
+            String rawPercentage = getPinValuePercentage(MCP3008Pin.CH0);
+            System.out.println("MCP3008 CH0: " + rawPercentage + "%");
+            percentage = formatPercentage(rawPercentage);
             Thread.sleep(CHECK_DURATION);
-            counter++;
-            if (counter == 10) counter = 0;
+        }
+    }
+
+    private String formatPercentage(String rawPercentage) {
+        while (rawPercentage.length() < 4) {
+            rawPercentage = " " + rawPercentage;
+        }
+
+        return rawPercentage;
+    }
+
+    private void displayLoop() throws InterruptedException {
+        List<GpioPinDigitalOutput> digits = new ArrayList<>(Arrays.asList(digit1, digit2, digit3, digit4));
+
+        for (; ; ) {
+            for (int i = 0; i < 4; i++) {
+                GpioPinDigitalOutput digit = digits.get(i);
+                digit.high();
+                shiftClient.process(percentage.charAt(i));
+                Thread.sleep(5);
+                digit.low();
+            }
         }
     }
 
