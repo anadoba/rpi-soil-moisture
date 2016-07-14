@@ -12,7 +12,8 @@ import java.util.List;
 
 public class GpioAdmin {
 
-    private final static int CHECK_DURATION = 2500;
+    private final static int CHECK_DURATION = 30000;
+    private final static int MULTIPLEX_INTERVAL = 7;
 
     private final GpioController gpio = GpioFactory.getInstance();
 
@@ -28,7 +29,7 @@ public class GpioAdmin {
 
     private MCP3008GpioProvider mcp3008;
 
-    private String percentage = "   0";
+    private String percentage = "1234";
 
     public GpioAdmin() {
         try {
@@ -43,7 +44,9 @@ public class GpioAdmin {
     }
 
     public void loop() throws InterruptedException {
-        displayLoop();
+        Runnable display = () -> { displayLoop(); };
+	Thread displayThread = new Thread(display);
+	displayThread.start();
 
         for (; ; ) {
             String rawPercentage = getPinValuePercentage(MCP3008Pin.CH0);
@@ -61,16 +64,21 @@ public class GpioAdmin {
         return rawPercentage;
     }
 
-    private void displayLoop() throws InterruptedException {
-        List<GpioPinDigitalOutput> digits = new ArrayList<>(Arrays.asList(digit1, digit2, digit3, digit4));
+    private void displayLoop() {
+        List<GpioPinDigitalOutput> digits = new ArrayList<>(Arrays.asList(digit1, digit3, digit2, digit4));
 
         for (; ; ) {
             for (int i = 0; i < 4; i++) {
-                GpioPinDigitalOutput digit = digits.get(i);
-                digit.high();
-                shiftClient.process(percentage.charAt(i));
-                Thread.sleep(5);
-                digit.low();
+		char targetChar = percentage.charAt(i);
+		if (targetChar == ' ') {
+			continue;
+		}
+                	shiftClient.process(targetChar);
+                	GpioPinDigitalOutput digit = digits.get(i);
+                	digit.high();
+			try { Thread.sleep(MULTIPLEX_INTERVAL); } catch (InterruptedException e) {}
+                	digit.low();
+		
             }
         }
     }
