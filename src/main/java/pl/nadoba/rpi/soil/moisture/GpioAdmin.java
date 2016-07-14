@@ -6,6 +6,7 @@ import com.pi4j.io.gpio.*;
 import com.pi4j.io.spi.SpiChannel;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -29,7 +30,8 @@ public class GpioAdmin {
 
     private MCP3008GpioProvider mcp3008;
 
-    private String percentage = "1234";
+    private String soilMoisturePercentage = "1234";
+    private int darknessPercentage = 0;
 
     public GpioAdmin() {
         try {
@@ -49,12 +51,11 @@ public class GpioAdmin {
         displayThread.start();
 
         for (; ; ) {
-            String rawPercentage = getPinValuePercentage(MCP3008Pin.CH0);
-            System.out.println("MCP3008 CH0: " + rawPercentage + "%");
+            darknessPercentage = Integer.valueOf(getPinValuePercentage(MCP3008Pin.CH1));
 
-            String rawPercentage2 = getPinValuePercentage(MCP3008Pin.CH1);
-            System.out.println("MCP3008 CH1: " + rawPercentage2 + "%");
-            percentage = formatPercentage(rawPercentage);
+            String rawSoilMoisturePercentage = getPinValuePercentage(MCP3008Pin.CH0);
+            soilMoisturePercentage = formatPercentage(rawSoilMoisturePercentage);
+
             Thread.sleep(CHECK_DURATION);
         }
     }
@@ -72,8 +73,8 @@ public class GpioAdmin {
 
         for (; ; ) {
             for (int i = 0; i < 4; i++) {
-                char targetChar = percentage.charAt(i);
-                if (targetChar == ' ') {
+                char targetChar = soilMoisturePercentage.charAt(i);
+                if (!shouldEnableDisplay() || targetChar == ' ') {
                     continue;
                 }
                 shiftClient.process(targetChar);
@@ -87,6 +88,13 @@ public class GpioAdmin {
 
             }
         }
+    }
+
+    private boolean shouldEnableDisplay() {
+        int hour = LocalDateTime.now().getHour();
+        boolean isTimeToSleep = (hour < 7) || (hour >= 23);
+        boolean isDarkInside = darknessPercentage > 98;
+        return isTimeToSleep && isDarkInside;
     }
 
     private String getPinValuePercentage(Pin pin) {
