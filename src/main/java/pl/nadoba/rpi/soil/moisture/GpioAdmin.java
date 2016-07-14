@@ -74,7 +74,7 @@ public class GpioAdmin {
         for (; ; ) {
             for (int i = 0; i < 4; i++) {
                 char targetChar = soilMoisturePercentage.charAt(i);
-                if (!shouldEnableDisplay() || targetChar == ' ') {
+                if (shouldDisableDisplay() || targetChar == ' ') {
                     continue;
                 }
                 shiftClient.process(targetChar);
@@ -90,7 +90,7 @@ public class GpioAdmin {
         }
     }
 
-    private boolean shouldEnableDisplay() {
+    private boolean shouldDisableDisplay() {
         int hour = LocalDateTime.now().getHour();
         boolean isTimeToSleep = (hour < 7) || (hour >= 23);
         boolean isDarkInside = darknessPercentage > 98;
