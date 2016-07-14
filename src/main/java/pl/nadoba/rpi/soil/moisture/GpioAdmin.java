@@ -12,7 +12,7 @@ import java.util.List;
 
 public class GpioAdmin {
 
-    private final static int CHECK_DURATION = 30000;
+    private final static int CHECK_DURATION = 10000;
     private final static int MULTIPLEX_INTERVAL = 7;
 
     private final GpioController gpio = GpioFactory.getInstance();
@@ -44,13 +44,16 @@ public class GpioAdmin {
     }
 
     public void loop() throws InterruptedException {
-        Runnable display = () -> { displayLoop(); };
-	Thread displayThread = new Thread(display);
-	displayThread.start();
+        Runnable display = this::displayLoop;
+        Thread displayThread = new Thread(display);
+        displayThread.start();
 
         for (; ; ) {
             String rawPercentage = getPinValuePercentage(MCP3008Pin.CH0);
             System.out.println("MCP3008 CH0: " + rawPercentage + "%");
+
+            String rawPercentage2 = getPinValuePercentage(MCP3008Pin.CH1);
+            System.out.println("MCP3008 CH1: " + rawPercentage2 + "%");
             percentage = formatPercentage(rawPercentage);
             Thread.sleep(CHECK_DURATION);
         }
@@ -69,16 +72,19 @@ public class GpioAdmin {
 
         for (; ; ) {
             for (int i = 0; i < 4; i++) {
-		char targetChar = percentage.charAt(i);
-		if (targetChar == ' ') {
-			continue;
-		}
-                	shiftClient.process(targetChar);
-                	GpioPinDigitalOutput digit = digits.get(i);
-                	digit.high();
-			try { Thread.sleep(MULTIPLEX_INTERVAL); } catch (InterruptedException e) {}
-                	digit.low();
-		
+                char targetChar = percentage.charAt(i);
+                if (targetChar == ' ') {
+                    continue;
+                }
+                shiftClient.process(targetChar);
+                GpioPinDigitalOutput digit = digits.get(i);
+                digit.high();
+                try {
+                    Thread.sleep(MULTIPLEX_INTERVAL);
+                } catch (InterruptedException e) {
+                }
+                digit.low();
+
             }
         }
     }
