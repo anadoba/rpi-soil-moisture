@@ -72,9 +72,13 @@ public class GpioAdmin {
         List<GpioPinDigitalOutput> digits = new ArrayList<>(Arrays.asList(digit1, digit3, digit2, digit4));
 
         for (; ; ) {
+            if (shouldDisableDisplay()) {
+                continue;
+            }
+
             for (int i = 0; i < 4; i++) {
                 char targetChar = soilMoisturePercentage.charAt(i);
-                if (shouldDisableDisplay() || targetChar == ' ') {
+                if (targetChar == ' ') {
                     continue;
                 }
                 shiftClient.process(targetChar);
@@ -83,6 +87,8 @@ public class GpioAdmin {
                 try {
                     Thread.sleep(MULTIPLEX_INTERVAL);
                 } catch (InterruptedException e) {
+                    System.out.println("Error when Thread.sleep to make multiplex interval");
+                    e.printStackTrace();
                 }
                 digit.low();
 
@@ -94,7 +100,10 @@ public class GpioAdmin {
         int hour = LocalDateTime.now().getHour();
         boolean isTimeToSleep = (hour < 7) || (hour >= 23);
         boolean isDarkInside = darknessPercentage > 98;
-        return isTimeToSleep && isDarkInside;
+        boolean result = isTimeToSleep && isDarkInside;
+        System.out.println(String.format("Hour: %d, Darkness: %d, so isTimeToSleep: %b and isDarkInside: %b, which results in shouldDisableDisplay [%b]",
+            hour, darknessPercentage, isTimeToSleep, isDarkInside, result));
+        return result;
     }
 
     private String getPinValuePercentage(Pin pin) {
