@@ -56,6 +56,9 @@ public class GpioAdmin {
             String rawSoilMoisturePercentage = getPinValuePercentage(MCP3008Pin.CH0);
             soilMoisturePercentage = formatPercentage(rawSoilMoisturePercentage);
 
+            System.out.print("Soil moisture: " + soilMoisturePercentage);
+            System.out.println(" / Darkness: " + darknessPercentage);
+
             Thread.sleep(CHECK_DURATION);
         }
     }
@@ -99,10 +102,8 @@ public class GpioAdmin {
     private boolean shouldDisableDisplay() {
         int hour = LocalDateTime.now().getHour();
         boolean isTimeToSleep = (hour < 7) || (hour >= 23);
-        boolean isDarkInside = darknessPercentage > 98;
+        boolean isDarkInside = darknessPercentage >= 98;
         boolean result = isTimeToSleep && isDarkInside;
-        System.out.println(String.format("Hour: %d, Darkness: %d, so isTimeToSleep: %b and isDarkInside: %b, which results in shouldDisableDisplay [%b]",
-            hour, darknessPercentage, isTimeToSleep, isDarkInside, result));
         return result;
     }
 
