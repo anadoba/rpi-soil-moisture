@@ -22,10 +22,10 @@ public class ShiftClient {
         toggle.low();
     }
 
-    private List<Boolean> digitToCommands(char digit) {
+    private List<Boolean> characterToCommands(char character) {
         List<Boolean> states;
 
-        switch (digit) {
+        switch (character) {
             case '0':
                 states = Arrays.asList(true, true, true, true, true, true, false, false);
                 break;
@@ -56,8 +56,17 @@ public class ShiftClient {
             case '9':
                 states = Arrays.asList(true, true, true, true, false, true, true, false);
                 break;
+            case 'L':
+                states = Arrays.asList(false, false, false, true, true, true, false, false);
+                break;
+            case 'E':
+                states = Arrays.asList(true, false, false, true, true, true, true, false);
+                break;
+            case 'J':
+                states = Arrays.asList(false, true, true, true, true, false, false, false);
+                break;
             default:
-                throw new RuntimeException("Input character was not a digit! - got: " + digit);
+                throw new RuntimeException("Input character was not convertable to 7seg LCD! - got: " + character);
         }
 
         if (states.size() != 8)
@@ -66,8 +75,8 @@ public class ShiftClient {
         return new ArrayList<Boolean>(states);
     }
 
-    public void process(char digit) {
-        List<Boolean> states = digitToCommands(digit);
+    public void process(char character) {
+        List<Boolean> states = characterToCommands(character);
         Collections.reverse(states);
         states.add(true); // we want to add 'false' in the end
 

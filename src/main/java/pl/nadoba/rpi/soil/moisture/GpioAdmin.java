@@ -15,6 +15,9 @@ public class GpioAdmin {
 
     private final static int CHECK_DURATION = 10000;
     private final static int MULTIPLEX_INTERVAL = 7;
+    private final static String SOIL_MOISTURE_TOO_LOW_MSG = "LEJ";
+    private final static int ZERO_LIGHT_LEVEL = 98;
+    private final static int SOIL_MOISTURE_LOW_LEVEL = 40;
 
     private final GpioController gpio = GpioFactory.getInstance();
 
@@ -54,7 +57,7 @@ public class GpioAdmin {
             darknessPercentage = Integer.valueOf(getPinValuePercentage(MCP3008Pin.CH1));
 
             String rawSoilMoisturePercentage = getPinValuePercentage(MCP3008Pin.CH0);
-            soilMoisturePercentage = formatPercentage(rawSoilMoisturePercentage);
+            soilMoisturePercentage = expandPercentageToFourChars(rawSoilMoisturePercentage);
 
             System.out.print("Soil moisture: " + soilMoisturePercentage);
             System.out.println(" / Darkness: " + darknessPercentage);
@@ -63,7 +66,7 @@ public class GpioAdmin {
         }
     }
 
-    private String formatPercentage(String rawPercentage) {
+    private String expandPercentageToFourChars(String rawPercentage) {
         while (rawPercentage.length() < 4) {
             rawPercentage = " " + rawPercentage;
         }
@@ -102,14 +105,20 @@ public class GpioAdmin {
     private boolean shouldDisableDisplay() {
         int hour = LocalDateTime.now().getHour();
         boolean isTimeToSleep = (hour < 7) || (hour >= 23);
-        boolean isDarkInside = darknessPercentage >= 98;
+        boolean isDarkInside = darknessPercentage >= ZERO_LIGHT_LEVEL;
         boolean result = isTimeToSleep && isDarkInside;
         return result;
     }
 
     private String getPinValuePercentage(Pin pin) {
         double d = mcp3008.getValue(pin);
-        return OutputNormalizer.toPercent(d);
+        int percentage = OutputNormalizer.toInt(d);
+
+        if (percentage > SOIL_MOISTURE_LOW_LEVEL) {
+            return OutputNormalizer.toPercent(d);
+        } else {
+            return SOIL_MOISTURE_TOO_LOW_MSG;
+        }
     }
 
 }

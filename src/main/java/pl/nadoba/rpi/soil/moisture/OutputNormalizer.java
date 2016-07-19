@@ -7,4 +7,8 @@ public class OutputNormalizer {
         double result = Math.abs(100 - inputPercent);
         return String.format("%.0f", result);
     }
+
+    public static int toInt(double d) {
+        return Integer.valueOf(toPercent(d));
+    }
 }
