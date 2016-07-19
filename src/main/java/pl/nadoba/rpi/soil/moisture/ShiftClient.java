@@ -65,6 +65,9 @@ public class ShiftClient {
             case 'J':
                 states = Arrays.asList(false, true, true, true, true, false, false, false);
                 break;
+            case ' ':
+                states = Arrays.asList(false, false, false, false, false, false, false, false);
+                break;
             default:
                 throw new RuntimeException("Input character was not convertable to 7seg LCD! - got: " + character);
         }

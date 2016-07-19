@@ -14,7 +14,7 @@ import java.util.List;
 public class GpioAdmin {
 
     private final static int CHECK_DURATION = 10000;
-    private final static int MULTIPLEX_INTERVAL = 7;
+    private final static int MULTIPLEX_INTERVAL = 5;
     private final static String SOIL_MOISTURE_TOO_LOW_MSG = "LEJ";
     private final static int ZERO_LIGHT_LEVEL = 98;
     private final static int SOIL_MOISTURE_LOW_LEVEL = 40;
@@ -54,19 +54,20 @@ public class GpioAdmin {
         displayThread.start();
 
         for (; ; ) {
-            darknessPercentage = Integer.valueOf(getPinValuePercentage(MCP3008Pin.CH1));
+            darknessPercentage = getPinValuePercentage(MCP3008Pin.CH1);
 
-            String rawSoilMoisturePercentage = getPinValuePercentage(MCP3008Pin.CH0);
-            soilMoisturePercentage = expandPercentageToFourChars(rawSoilMoisturePercentage);
+            int rawSoilMoisturePercentage = getPinValuePercentage(MCP3008Pin.CH0);
+            String soilMoistureMsg = getMessageFromMoisturePercentage(rawSoilMoisturePercentage);
+            soilMoisturePercentage = expandMessageToFourChars(soilMoistureMsg);
 
-            System.out.print("Soil moisture: " + soilMoisturePercentage);
+            System.out.print("Soil moisture: " + rawSoilMoisturePercentage);
             System.out.println(" / Darkness: " + darknessPercentage);
 
             Thread.sleep(CHECK_DURATION);
         }
     }
 
-    private String expandPercentageToFourChars(String rawPercentage) {
+    private String expandMessageToFourChars(String rawPercentage) {
         while (rawPercentage.length() < 4) {
             rawPercentage = " " + rawPercentage;
         }
@@ -84,9 +85,7 @@ public class GpioAdmin {
 
             for (int i = 0; i < 4; i++) {
                 char targetChar = soilMoisturePercentage.charAt(i);
-                if (targetChar == ' ') {
-                    continue;
-                }
+
                 shiftClient.process(targetChar);
                 GpioPinDigitalOutput digit = digits.get(i);
                 digit.high();
@@ -110,12 +109,14 @@ public class GpioAdmin {
         return result;
     }
 
-    private String getPinValuePercentage(Pin pin) {
+    private int getPinValuePercentage(Pin pin) {
         double d = mcp3008.getValue(pin);
-        int percentage = OutputNormalizer.toInt(d);
+        return OutputNormalizer.toInt(d);
+    }
 
+    private String getMessageFromMoisturePercentage(int percentage) {
         if (percentage > SOIL_MOISTURE_LOW_LEVEL) {
-            return OutputNormalizer.toPercent(d);
+            return String.valueOf(percentage);
         } else {
             return SOIL_MOISTURE_TOO_LOW_MSG;
         }
